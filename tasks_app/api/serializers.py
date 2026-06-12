@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from boards_app.models import Boards
 from django.contrib.auth.models import User
-from ..models import Tasks
+from ..models import Tasks, Comments
 
 
 class PostTaskSerializer(serializers.ModelSerializer):
@@ -14,7 +14,7 @@ class PostTaskSerializer(serializers.ModelSerializer):
     assignee_id = serializers.PrimaryKeyRelatedField(
         many=False,
         queryset=User.objects.all(),
-        required=True,
+        required=False,
         write_only=True,
         source='assignee'
     )
@@ -23,7 +23,7 @@ class PostTaskSerializer(serializers.ModelSerializer):
     reviewer_id = serializers.PrimaryKeyRelatedField(
         many=False,
         queryset=User.objects.all(),
-        required=True,
+        required=False,
         write_only=True,
         source='reviewer'
     )
@@ -33,15 +33,19 @@ class PostTaskSerializer(serializers.ModelSerializer):
     comments_count = serializers.SerializerMethodField()
 
     def get_assignee(self, obj):
+        if obj.assignee == None:
+            return
         return {'id': obj.assignee.id, 'email': obj.assignee.email,
                 'fullname': obj.assignee.username}
 
     def get_reviewer(self, obj):
+        if obj.reviewer == None:
+            return
         return {'id': obj.reviewer.id, 'email': obj.reviewer.email,
                 'fullname': obj.reviewer.username}
 
     def get_comments_count(self, obj):
-        return 0
+        return obj.comment.count()
 
     class Meta:
         model = Tasks
@@ -75,10 +79,14 @@ class UpdateAndDeleteTaskSerializer(serializers.ModelSerializer):
     reviewer = serializers.SerializerMethodField()
 
     def get_assignee(self, obj):
+        if obj.assignee == None:
+            return
         return {'id': obj.assignee.id, 'email': obj.assignee.email,
                 'fullname': obj.assignee.username}
 
     def get_reviewer(self, obj):
+        if obj.reviewer == None:
+            return
         return {'id': obj.reviewer.id, 'email': obj.reviewer.email,
                 'fullname': obj.reviewer.username}
 
@@ -86,3 +94,43 @@ class UpdateAndDeleteTaskSerializer(serializers.ModelSerializer):
         model = Tasks
         fields = ['id', 'board', 'title', 'description', 'status',
                   'priority', 'assignee', 'reviewer', 'assignee_id', 'reviewer_id', 'due_date']
+
+
+class AssignedToMeOrReviewerSerializer(serializers.ModelSerializer):
+    assignee = serializers.SerializerMethodField()
+    reviewer = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+
+    def get_assignee(self, obj):
+        if obj.assignee == None:
+            return
+        return {'id': obj.assignee.id, 'email': obj.assignee.email, 'fullname': obj.assignee.username}
+
+    def get_reviewer(self, obj):
+        if obj.reviewer == None:
+            return
+        return {'id': obj.reviewer.id, 'email': obj.reviewer.email, 'fullname': obj.reviewer.username}
+
+    def get_comments_count(self, obj):
+        return obj.comment.count()
+
+    class Meta:
+        model = Tasks
+        fields = [
+            'id', 'board', 'title', 'description', 'status', 'priority', 'assignee', 'reviewer', 'due_date', 'comments_count'
+        ]
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(
+        format="%Y-%m-%dT%H:%M:%SZ", read_only=True)
+
+    def get_author(self, obj):
+        if obj.author == None:
+            return
+        return obj.author.username
+
+    class Meta:
+        model = Comments
+        fields = ['id', 'created_at', 'author', 'content']

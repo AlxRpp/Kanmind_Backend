@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from ..models import Boards
 from django.contrib.auth.models import User
+from tasks_app.api.serializers import PostTaskSerializer
 
 
 class BoardSerializer(serializers.ModelSerializer):
@@ -19,13 +20,13 @@ class BoardSerializer(serializers.ModelSerializer):
         return obj.members.count()
 
     def get_ticket_count(self, obj):
-        return 0
+        return obj.task.count()
 
     def get_tasks_to_do_count(self, obj):
-        return 0
+        return obj.task.filter(status='to-do').count()
 
     def get_tasks_high_prio_count(self, obj):
-        return 0
+        return obj.task.filter(priority='high').count()
 
     class Meta:
         model = Boards
@@ -44,7 +45,7 @@ class GetSingleBoardSerializer(serializers.ModelSerializer):
         ]
 
     def get_tasks(self, obj):
-        return [{'title': 'CommingSoon'}]
+        return PostTaskSerializer(obj.task.all(), many=True).data
 
     class Meta:
         model = Boards

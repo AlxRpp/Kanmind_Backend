@@ -40,3 +40,20 @@ class Tasks(models.Model):
         verbose_name = "Task"
         verbose_name_plural = "Tasks"
         ordering = ['id']
+
+
+class Comments(models.Model):
+    task = models.ForeignKey(
+        Tasks, on_delete=models.CASCADE, related_name='comment')
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True)
+    content = models.CharField(max_length=500, blank=False, null=False)
+
+    def __str__(self):
+        return f"Author: {self.author}, Content: {self.content}"
+
+    class Meta:
+        verbose_name = "Comment"
+        verbose_name_plural = "Comments"
+        ordering = ['created_at']
