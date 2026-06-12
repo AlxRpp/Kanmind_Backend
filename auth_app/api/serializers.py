@@ -2,8 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 
 
-# Handles registration. The 'fullname' field maps to Django's username.
 class RegistrationSerializer(serializers.ModelSerializer):
+    """Handles registration. The 'fullname' field maps to Django's username."""
+
     fullname = serializers.CharField(source='username')
     repeated_password = serializers.CharField(write_only=True)
 
@@ -24,8 +25,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('email already exists')
         return value
 
-    # Creates the user after checking that both passwords match.
     def save(self):
+        """Creates the user after checking that both passwords match."""
         pw = self.validated_data['password']
         repeated_pw = self.validated_data['repeated_password']
 

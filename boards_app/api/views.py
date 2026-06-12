@@ -16,12 +16,12 @@ class BoardView(generics.ListCreateAPIView):
     serializer_class = BoardSerializer
     permission_classes = [IsAuthenticated]
 
-    # Owner is taken from the token, not from request body.
     def perform_create(self, serializer):
+        """Owner is taken from the token, not from request body."""
         serializer.save(owner=self.request.user)
 
-    # Returns boards where the user is owner or member. distinct() prevents duplicates.
     def get_queryset(self):
+        """Returns boards where the user is owner or member. distinct() prevents duplicates."""
         query = Boards.objects.filter(
             Q(owner=self.request.user) | Q(members=self.request.user)).distinct()
         return query
@@ -31,22 +31,22 @@ class SingleBoardView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GetSingleBoardSerializer
     permission_classes = [IsAuthenticated]
 
-    # Returns the board if the user is owner or member, otherwise raises 403.
     def get_object(self):
+        """Returns the board if the user is owner or member, otherwise raises 403."""
         obj = get_object_or_404(Boards, pk=self.kwargs['pk'])
         if obj.owner != self.request.user and self.request.user not in obj.members.all():
             raise PermissionDenied
         return obj
 
-    # Only the owner can delete the board, not just any member.
     def destroy(self, request, *args, **kwargs):
+        """Only the owner can delete the board, not just any member."""
         obj = get_object_or_404(Boards, pk=self.kwargs['pk'])
         if obj.owner != self.request.user:
             raise PermissionDenied()
         return super().destroy(request, *args, **kwargs)
 
-    # GET returns nested read data, all other methods use the write serializer.
     def get_serializer_class(self):
+        """GET returns nested read data, all other methods use the write serializer."""
         if self.request.method == 'GET':
             return GetSingleBoardSerializer
         return WriteAndDeleteSingleBoardSerializer
@@ -56,8 +56,8 @@ class EmailCheckView(APIView):
     serializer = EmailCheckSerializer
     permission_classes = [IsAuthenticated]
 
-    # Checks if a user with that email exists. Email is passed as query param, not in body.
     def get(self, request):
+        """Checks if a user with that email exists. Email is passed as query param, not in body."""
         email = request.query_params.get('email')
 
         if not email:
