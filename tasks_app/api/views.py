@@ -11,12 +11,14 @@ class PostTaskView(CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PostTaskSerializer
 
+    # Checks board membership before creating. Only members and the owner can add tasks.
     def post(self, request, *args, **kwargs):
         obj = get_object_or_404(Boards, pk=request.data.get('board'))
         if request.user != obj.owner and request.user not in obj.members.all():
             raise PermissionDenied
         return super().post(request, *args, **kwargs)
 
+    # Sets creator from the token, not the request body.
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
@@ -25,6 +27,7 @@ class UpdateAndDeleteTaskView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UpdateAndDeleteTaskSerializer
 
+    # Only board members and the owner can access this task.
     def get_object(self):
         pk = self.kwargs.get('pk')
         obj = get_object_or_404(Tasks, pk=pk)
@@ -32,6 +35,7 @@ class UpdateAndDeleteTaskView(RetrieveUpdateDestroyAPIView):
             raise PermissionDenied
         return obj
 
+    # Task creator or board owner can delete. Regular members can't.
     def destroy(self, request, *args, **kwargs):
         obj = get_object_or_404(Tasks, pk=self.kwargs['pk'])
         if obj.creator != self.request.user and request.user != obj.board.owner:
@@ -59,6 +63,7 @@ class CommentsView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = CommentsSerializer
 
+    # Helper to fetch the task and check board membership in one place.
     def get_task(self):
         task = get_object_or_404(Tasks, pk=self.kwargs.get('pk'))
         if task.board.owner != self.request.user and self.request.user not in task.board.members.all():
@@ -80,6 +85,7 @@ class DeleteComment(DestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Comments.objects.all()
 
+    # Fetches task and comment by their own IDs from the URL. Only the comment author can delete.
     def get_object(self):
         task = get_object_or_404(Tasks, pk=self.kwargs.get('task_id'))
         comment = get_object_or_404(Comments, pk=self.kwargs.get('comment_id'))

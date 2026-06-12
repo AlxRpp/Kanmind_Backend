@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from ..models import Tasks, Comments
 
 
+# assignee_id and reviewer_id are write-only input. The response returns full user objects via SerializerMethodFields.
 class PostTaskSerializer(serializers.ModelSerializer):
     board = serializers.PrimaryKeyRelatedField(
         many=False,
@@ -121,6 +122,7 @@ class AssignedToMeOrReviewerSerializer(serializers.ModelSerializer):
         ]
 
 
+# created_at is formatted without microseconds so the frontend gets a clean ISO string.
 class CommentsSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(

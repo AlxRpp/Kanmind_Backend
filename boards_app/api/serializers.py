@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from tasks_app.api.serializers import PostTaskSerializer
 
 
+# Board list serializer. Returns counted fields instead of nested data.
 class BoardSerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
     ticket_count = serializers.SerializerMethodField()
@@ -44,6 +45,7 @@ class GetSingleBoardSerializer(serializers.ModelSerializer):
             for u in obj.members.all()
         ]
 
+    # Returns all tasks of this board. Reuses PostTaskSerializer to keep the format consistent.
     def get_tasks(self, obj):
         return PostTaskSerializer(obj.task.all(), many=True).data
 
@@ -52,6 +54,7 @@ class GetSingleBoardSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
 
 
+# Used for PATCH. Takes member ids as input, but returns full user objects in the response.
 class WriteAndDeleteSingleBoardSerializer(serializers.ModelSerializer):
     members = serializers.PrimaryKeyRelatedField(
         write_only=True,

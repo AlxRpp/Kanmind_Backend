@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
 
+    # Creates a new user and returns a token right away.
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
 
@@ -33,6 +34,7 @@ class RegistrationView(APIView):
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
+    # Lookup by email, not username. Returns token if credentials are valid.
     def post(self, request):
         data = {}
         try:
